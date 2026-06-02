@@ -9,79 +9,103 @@ export function AuthProvider({ children }) {
   const [loading, setLoading] = useState(true)
 
   useEffect(() => {
-    supabase.auth.getSession().then(({ data: { session } }) => {
-      setSession(session)
-      if (session?.user) {
-        fetchUserProfile(session.user.id)
-      } else {
+    const checkSession = async () => {
+      try {
+        const stored = localStorage.getItem('school_erp_session')
+        if (stored) {
+          const parsed = JSON.parse(stored)
+          setSession(parsed)
+          await fetchUserProfile(parsed.user.id, parsed.user.role)
+        }
+      } catch (err) {
+        console.error('Session restore failed:', err)
+      } finally {
         setLoading(false)
       }
-    })
-
-    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
-      setSession(session)
-      if (session?.user) {
-        fetchUserProfile(session.user.id)
-      } else {
-        setUser(null)
-        setLoading(false)
-      }
-    })
-
-    return () => subscription.unsubscribe()
+    }
+    checkSession()
   }, [])
 
-  const fetchUserProfile = async (userId) => {
+  const fetchUserProfile = async (userId, role) => {
     try {
+      // First try to fetch from the main users table
       const { data, error } = await supabase
         .from('users')
         .select('*')
         .eq('id', userId)
         .single()
       
-      if (error) {
+      if (error && role !== 'admin') {
         console.error('Error fetching user profile:', error)
         setUser(null)
-      } else {
-        // Also fetch specific data based on role
-        let extraData = {}
-        if (data.role === 'student' || data.role === 'parent') {
-          const table = data.role === 'student' ? 'students' : 'parents'
-          const { data: specificData } = await supabase.from(table).select('*').eq('id', userId).maybeSingle()
-          extraData = specificData || {}
-        }
-        
-        // For teachers, fetch subject mapping
-        if (data.role === 'teacher') {
-          const { data: classes } = await supabase.from('class_subject_teacher_mapping').select('class_id').eq('teacher_id', userId)
-          extraData.subjectClasses = classes ? [...new Set(classes.map(c => c.class_id))] : []
-        }
-
-        setUser({ ...data, ...extraData })
+        return
       }
+
+      let userData = data || { id: userId, role }
+
+      // Also fetch specific data based on role from the specific tables
+      let extraData = {}
+      if (role === 'student') {
+        const { data: studentData } = await supabase.from('students').select('*').eq('id', userId).maybeSingle()
+        extraData = studentData || {}
+      } else if (role === 'teacher') {
+        const { data: teacherData } = await supabase.from('teachers').select('*').eq('id', userId).maybeSingle()
+        extraData = teacherData || {}
+      } else if (role === 'admin') {
+        const { data: adminData } = await supabase.from('admins').select('*').eq('id', userId).maybeSingle()
+        extraData = adminData || {}
+      }
+      
+      setUser({ ...userData, ...extraData })
     } catch (err) {
       console.error(err)
-    } finally {
-      setLoading(false)
     }
   }
 
   const login = async (email, password) => {
     setLoading(true)
-    const { data, error } = await supabase.auth.signInWithPassword({
-      email,
-      password,
-    })
-    
-    if (error) {
+    try {
+      // Check custom users table
+      const { data, error } = await supabase
+        .from('users')
+        .select('*')
+        .eq('email', email)
+        .eq('password', password)
+        .single()
+      
+      if (error || !data) {
+        // Fallback to admins table if not in users table
+        const { data: adminData, error: adminErr } = await supabase
+          .from('admins')
+          .select('*')
+          .eq('email', email)
+          .eq('password', password)
+          .single()
+
+        if (adminErr || !adminData) {
+          throw new Error('Invalid email or password')
+        }
+        
+        const adminSession = { user: { id: adminData.id, role: 'admin', email: adminData.email } }
+        setSession(adminSession)
+        localStorage.setItem('school_erp_session', JSON.stringify(adminSession))
+        await fetchUserProfile(adminData.id, 'admin')
+        return adminSession
+      }
+
+      const sessionObj = { user: data }
+      setSession(sessionObj)
+      localStorage.setItem('school_erp_session', JSON.stringify(sessionObj))
+      await fetchUserProfile(data.id, data.role)
+      return sessionObj
+    } finally {
       setLoading(false)
-      throw error
     }
-    return data
   }
 
   const logout = async () => {
-    await supabase.auth.signOut()
+    localStorage.removeItem('school_erp_session')
+    setSession(null)
     setUser(null)
   }
 
