@@ -28,32 +28,22 @@ export function AuthProvider({ children }) {
 
   const fetchUserProfile = async (userId, role) => {
     try {
-      // First try to fetch from the main users table
-      const { data, error } = await supabase
-        .from('users')
-        .select('*')
-        .eq('id', userId)
-        .single()
-      
-      if (error && role !== 'admin') {
-        console.error('Error fetching user profile:', error)
-        setUser(null)
-        return
-      }
-
-      let userData = data || { id: userId, role }
-
-      // Also fetch specific data based on role from the specific tables
+      let userData = { id: userId, role }
       let extraData = {}
-      if (role === 'student') {
-        const { data: studentData } = await supabase.from('students').select('*').eq('id', userId).maybeSingle()
-        extraData = studentData || {}
+
+      if (role === 'admin') {
+        const { data } = await supabase.from('admins').select('*').eq('id', userId).maybeSingle()
+        if (data) userData = { ...userData, ...data }
+      } else if (role === 'student') {
+        const { data } = await supabase.from('students').select('*, classes(class_name, section)').eq('id', userId).maybeSingle()
+        if (data) extraData = data
       } else if (role === 'teacher') {
-        const { data: teacherData } = await supabase.from('teachers').select('*').eq('id', userId).maybeSingle()
-        extraData = teacherData || {}
-      } else if (role === 'admin') {
-        const { data: adminData } = await supabase.from('admins').select('*').eq('id', userId).maybeSingle()
-        extraData = adminData || {}
+        const { data } = await supabase.from('teachers').select('*').eq('id', userId).maybeSingle()
+        if (data) extraData = data
+        
+        // Fetch subjects using the actual schema tables instead of the dummy table
+        const { data: classes } = await supabase.from('subject_teachers').select('class_id').eq('teacher_id', userId)
+        extraData.subjectClasses = classes ? [...new Set(classes.map(c => c.class_id))] : []
       }
       
       setUser({ ...userData, ...extraData })
@@ -62,41 +52,29 @@ export function AuthProvider({ children }) {
     }
   }
 
-  const login = async (email, password) => {
+  const login = async (email, password, role = 'admin') => {
     setLoading(true)
     try {
-      // Check custom users table
+      let table = 'users'
+      if (role === 'admin') table = 'admins'
+      if (role === 'teacher') table = 'teachers'
+      if (role === 'student') table = 'students'
+
       const { data, error } = await supabase
-        .from('users')
+        .from(table)
         .select('*')
         .eq('email', email)
         .eq('password', password)
         .single()
       
       if (error || !data) {
-        // Fallback to admins table if not in users table
-        const { data: adminData, error: adminErr } = await supabase
-          .from('admins')
-          .select('*')
-          .eq('email', email)
-          .eq('password', password)
-          .single()
-
-        if (adminErr || !adminData) {
-          throw new Error('Invalid email or password')
-        }
-        
-        const adminSession = { user: { id: adminData.id, role: 'admin', email: adminData.email } }
-        setSession(adminSession)
-        localStorage.setItem('school_erp_session', JSON.stringify(adminSession))
-        await fetchUserProfile(adminData.id, 'admin')
-        return adminSession
+        throw new Error(`Invalid email or password for ${role.charAt(0).toUpperCase() + role.slice(1)}`)
       }
 
-      const sessionObj = { user: data }
+      const sessionObj = { user: { id: data.id, role: role, email: data.email, name: data.name } }
       setSession(sessionObj)
       localStorage.setItem('school_erp_session', JSON.stringify(sessionObj))
-      await fetchUserProfile(data.id, data.role)
+      await fetchUserProfile(data.id, role)
       return sessionObj
     } finally {
       setLoading(false)
