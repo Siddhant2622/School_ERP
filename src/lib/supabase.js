@@ -1,6 +1,8 @@
 import { createClient } from '@supabase/supabase-js'
 
-const supabaseUrl = import.meta.env.VITE_SUPABASE_URL
+const rawUrl = import.meta.env.VITE_SUPABASE_URL
+// Automatically fix the URL if the user accidentally copied the /rest/v1 API URL
+const supabaseUrl = rawUrl ? rawUrl.replace(/\/rest\/v1\/?$/, '') : ''
 const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY
 
 if (!supabaseUrl || !supabaseAnonKey) {
