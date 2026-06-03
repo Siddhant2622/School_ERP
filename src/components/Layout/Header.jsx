@@ -1,10 +1,13 @@
 import { useState, useEffect, useRef } from 'react'
+import { useOutletContext } from 'react-router-dom'
 import { useAuth } from '../../contexts/AuthContext'
-import { Bell, Search } from 'lucide-react'
+import { Bell, Menu } from 'lucide-react'
 import { supabase } from '../../lib/supabase'
 
 export default function Header({ title }) {
   const { user } = useAuth()
+  const context = useOutletContext()
+  const onMenuToggle = context?.onMenuToggle
   const [showNotifications, setShowNotifications] = useState(false)
   const [notices, setNotices] = useState([])
   const dropdownRef = useRef(null)
@@ -37,8 +40,15 @@ export default function Header({ title }) {
   }
 
   return (
-    <header className="header" style={{ position: 'relative', zIndex: 50 }}>
-      <h1 className="header-title">{title}</h1>
+    <header className="header">
+      <div style={{ display: 'flex', alignItems: 'center', gap: 'var(--space-3)' }}>
+        {onMenuToggle && (
+          <button className="mobile-menu-btn" onClick={onMenuToggle} title="Toggle menu">
+            <Menu size={20} />
+          </button>
+        )}
+        <h1 className="header-title">{title}</h1>
+      </div>
       <div className="header-actions">
         <div style={{ position: 'relative' }} ref={dropdownRef}>
           <button 
@@ -50,7 +60,7 @@ export default function Header({ title }) {
             {notices.length > 0 && (
               <span style={{
                 position: 'absolute', top: 4, right: 4, width: 8, height: 8, 
-                backgroundColor: 'var(--danger)', borderRadius: '50%'
+                backgroundColor: 'var(--danger-500)', borderRadius: '50%'
               }}></span>
             )}
           </button>
@@ -58,26 +68,52 @@ export default function Header({ title }) {
           {showNotifications && (
             <div style={{
               position: 'absolute', right: 0, top: '100%', marginTop: 8,
-              width: 300, backgroundColor: 'var(--card-bg)', border: '1px solid var(--border)',
-              borderRadius: 8, boxShadow: '0 4px 12px rgba(0,0,0,0.15)', overflow: 'hidden'
+              width: 320, backgroundColor: 'var(--bg-secondary)',
+              border: '1px solid var(--border-default)',
+              borderRadius: 'var(--radius-lg)',
+              boxShadow: 'var(--shadow-xl)',
+              overflow: 'hidden',
+              zIndex: 200,
+              animation: 'slideUp 0.2s ease-out'
             }}>
-              <div style={{ padding: '12px 16px', borderBottom: '1px solid var(--border)', fontWeight: 600 }}>
+              <div style={{
+                padding: '14px 16px',
+                borderBottom: '1px solid var(--border-default)',
+                fontWeight: 700,
+                fontSize: '0.9rem',
+                color: 'var(--text-primary)'
+              }}>
                 Notifications
               </div>
               <div style={{ maxHeight: 300, overflowY: 'auto' }}>
                 {notices.length === 0 ? (
-                  <div style={{ padding: 16, textAlign: 'center', color: 'var(--text-secondary)' }}>
+                  <div style={{
+                    padding: '24px 16px', textAlign: 'center',
+                    color: 'var(--text-tertiary)', fontSize: '0.85rem'
+                  }}>
                     No new notifications
                   </div>
                 ) : (
                   notices.map(notice => (
                     <div key={notice.id} style={{ 
-                      padding: 12, borderBottom: '1px solid var(--border)',
-                      cursor: 'pointer'
-                    }} className="hover:bg-gray-50">
-                      <div style={{ fontWeight: 500, fontSize: '0.9rem', marginBottom: 4 }}>{notice.title}</div>
-                      <div style={{ fontSize: '0.8rem', color: 'var(--text-secondary)' }}>
-                        {new Date(notice.published_at).toLocaleDateString()}
+                      padding: '12px 16px',
+                      borderBottom: '1px solid var(--border-default)',
+                      cursor: 'pointer',
+                      transition: 'background 0.15s ease'
+                    }}
+                    onMouseEnter={e => e.currentTarget.style.background = 'rgba(99, 102, 241, 0.05)'}
+                    onMouseLeave={e => e.currentTarget.style.background = 'transparent'}
+                    >
+                      <div style={{
+                        fontWeight: 600, fontSize: '0.85rem',
+                        marginBottom: 4, color: 'var(--text-primary)'
+                      }}>
+                        {notice.title}
+                      </div>
+                      <div style={{ fontSize: '0.75rem', color: 'var(--text-tertiary)' }}>
+                        {new Date(notice.published_at).toLocaleDateString('en-IN', {
+                          day: 'numeric', month: 'short', year: 'numeric'
+                        })}
                       </div>
                     </div>
                   ))

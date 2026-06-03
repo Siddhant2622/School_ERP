@@ -36,6 +36,7 @@ const teacherNav = [
   { section: 'Academics' },
   { to: '/students', icon: GraduationCap, label: 'Students' },
   { to: '/subject-teachers', icon: UserCog, label: 'Subject Assignment' },
+  { to: '/subjects', icon: BookOpen, label: 'Subjects' },
   { section: 'Assessment' },
   { to: '/exams', icon: ClipboardList, label: 'Exams' },
   { to: '/marks', icon: Award, label: 'Marks Entry' },
@@ -71,7 +72,7 @@ const parentNav = [
   { to: '/notices', icon: Bell, label: 'Notices' },
 ]
 
-export default function Sidebar() {
+export default function Sidebar({ isOpen, onClose }) {
   const { user, logout } = useAuth()
   const location = useLocation()
 
@@ -80,7 +81,7 @@ export default function Sidebar() {
   else if (user?.role === 'teacher') navItems = teacherNav
   else if (user?.role === 'parent') navItems = parentNav
 
-  const initials = (user?.full_name || user?.email || 'U')
+  const initials = (user?.full_name || user?.name || user?.email || 'U')
     .split(' ')
     .map(w => w[0])
     .join('')
@@ -88,7 +89,7 @@ export default function Sidebar() {
     .slice(0, 2)
 
   return (
-    <aside className="sidebar">
+    <aside className={`sidebar ${isOpen ? 'open' : ''}`}>
       <div className="sidebar-logo">
         <div className="logo-icon">S</div>
         <div>
@@ -111,6 +112,7 @@ export default function Sidebar() {
                 `nav-item ${isActive && location.pathname === item.to ? 'active' : ''}`
               }
               end={item.to === '/'}
+              onClick={() => onClose && onClose()}
             >
               <Icon />
               <span>{item.label}</span>
@@ -123,7 +125,7 @@ export default function Sidebar() {
         <div className="sidebar-user">
           <div className="sidebar-user-avatar">{initials}</div>
           <div className="sidebar-user-info">
-            <div className="sidebar-user-name">{user?.full_name || user?.email}</div>
+            <div className="sidebar-user-name">{user?.full_name || user?.name || user?.email}</div>
             <div className="sidebar-user-role">{user?.role}</div>
           </div>
         </div>

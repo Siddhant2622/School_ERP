@@ -160,8 +160,8 @@ export default function ReportCardPage() {
                 <th rowSpan={2}>Grand Total</th>
               </tr>
               <tr>
-                <th>PT1</th><th>NB</th><th>SE</th><th>MA</th><th>HF</th><th>Total</th>
-                <th>PT2</th><th>NB</th><th>SE</th><th>MA</th><th>ANN</th><th>Total</th>
+                <th>PT1</th><th>NB</th><th>SE</th><th>SEA</th><th>HF</th><th>Total</th>
+                <th>PT2</th><th>NB</th><th>SE</th><th>SEA</th><th>ANUAL</th><th>Total</th>
               </tr>
             </thead>
             <tbody>

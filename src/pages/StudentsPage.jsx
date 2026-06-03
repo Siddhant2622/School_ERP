@@ -3,6 +3,7 @@ import { supabase } from '../lib/supabase'
 import { useAuth } from '../contexts/AuthContext'
 import Header from '../components/Layout/Header'
 import Modal from '../components/ui/Modal'
+import ConfirmDialog from '../components/ui/ConfirmDialog'
 import ToastContainer from '../components/ui/ToastContainer'
 import { useToast } from '../hooks/useToast'
 import { Plus, Pencil, Trash2, GraduationCap, Search } from 'lucide-react'
@@ -17,6 +18,8 @@ export default function StudentsPage() {
   const [editing, setEditing] = useState(null)
   const [search, setSearch] = useState('')
   const [filterClass, setFilterClass] = useState('')
+  const [confirmState, setConfirmState] = useState({ open: false, id: null, name: '' })
+  const [formErrors, setFormErrors] = useState({})
   const [form, setForm] = useState({
     firstName: '', lastName: '', email: '', password: 'student123',
     classId: '', rollNo: '', admissionNo: '', fatherName: '', motherName: '',
@@ -83,7 +86,18 @@ export default function StudentsPage() {
     setModalOpen(true)
   }
 
+  const validateStudentForm = () => {
+    const errs = {}
+    if (!form.firstName.trim()) errs.firstName = 'First name is required'
+    if (!form.email.trim()) errs.email = 'Email is required'
+    else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(form.email)) errs.email = 'Enter a valid email'
+    setFormErrors(errs)
+    return Object.keys(errs).length === 0
+  }
+
   const handleSave = async () => {
+    if (!validateStudentForm()) return
+
     const name = `${form.firstName} ${form.lastName}`.trim()
     const payload = {
       name, email: form.email, password: form.password,
@@ -108,12 +122,18 @@ export default function StudentsPage() {
     loadStudents()
   }
 
-  const handleDelete = async (id) => {
-    if (!confirm('Delete this student?')) return
-    const { error: err } = await supabase.from('students').delete().eq('id', id)
-    if (err) return error(err.message)
-    success('Student deleted')
-    loadStudents()
+  const requestDelete = (s) => {
+    setConfirmState({ open: true, id: s.id, name: s.name })
+  }
+
+  const handleDelete = async () => {
+    const { error: err } = await supabase.from('students').delete().eq('id', confirmState.id)
+    if (err) error(err.message)
+    else {
+      success('Student deleted')
+      loadStudents()
+    }
+    setConfirmState({ open: false, id: null, name: '' })
   }
 
   const filtered = students.filter(s => {
@@ -185,7 +205,7 @@ export default function StudentsPage() {
                       <td>
                         <div className="table-actions">
                           <button className="btn btn-ghost btn-sm" onClick={() => openEdit(s)}><Pencil size={14} /></button>
-                          <button className="btn btn-ghost btn-sm" onClick={() => handleDelete(s.id)}><Trash2 size={14} /></button>
+                          <button className="btn btn-ghost btn-sm" onClick={() => requestDelete(s)}><Trash2 size={14} /></button>
                         </div>
                       </td>
                     )}
@@ -211,8 +231,9 @@ export default function StudentsPage() {
       >
         <div className="form-row">
           <div className="form-group">
-            <label className="form-label">First Name</label>
-            <input className="form-input" value={form.firstName} onChange={e => setForm({ ...form, firstName: e.target.value })} />
+            <label className="form-label">First Name <span className="required-asterisk">*</span></label>
+            <input className={`form-input ${formErrors.firstName ? 'invalid' : ''}`} value={form.firstName} onChange={e => { setForm({ ...form, firstName: e.target.value }); setFormErrors({...formErrors, firstName: null}) }} />
+            {formErrors.firstName && <div className="form-error-text">{formErrors.firstName}</div>}
           </div>
           <div className="form-group">
             <label className="form-label">Last Name</label>
@@ -221,8 +242,9 @@ export default function StudentsPage() {
         </div>
         <div className="form-row">
           <div className="form-group">
-            <label className="form-label">Email</label>
-            <input className="form-input" type="email" value={form.email} onChange={e => setForm({ ...form, email: e.target.value })} />
+            <label className="form-label">Email <span className="required-asterisk">*</span></label>
+            <input className={`form-input ${formErrors.email ? 'invalid' : ''}`} type="email" value={form.email} onChange={e => { setForm({ ...form, email: e.target.value }); setFormErrors({...formErrors, email: null}) }} />
+            {formErrors.email && <div className="form-error-text">{formErrors.email}</div>}
           </div>
           <div className="form-group">
             <label className="form-label">Password</label>
@@ -282,6 +304,16 @@ export default function StudentsPage() {
           <textarea className="form-textarea" value={form.address} onChange={e => setForm({ ...form, address: e.target.value })} />
         </div>
       </Modal>
+
+      <ConfirmDialog
+        isOpen={confirmState.open}
+        onConfirm={handleDelete}
+        onCancel={() => setConfirmState({ open: false, id: null, name: '' })}
+        title="Delete Student"
+        message={`Are you sure you want to delete "${confirmState.name}"? This will remove all their records including fees, marks, and attendance.`}
+        confirmLabel="Delete Student"
+        variant="danger"
+      />
     </>
   )
 }

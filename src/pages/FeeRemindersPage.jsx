@@ -3,7 +3,7 @@ import { supabase } from '../lib/supabase'
 import Header from '../components/Layout/Header'
 import ToastContainer from '../components/ui/ToastContainer'
 import { useToast } from '../hooks/useToast'
-import { AlertCircle, Send, MessageSquare } from 'lucide-react'
+import { AlertCircle, Send, MessageSquare, Search, Hash } from 'lucide-react'
 
 export default function FeeRemindersPage() {
   const { toasts, success, error } = useToast()
@@ -11,9 +11,7 @@ export default function FeeRemindersPage() {
   const [defaulters, setDefaulters] = useState([])
   const [loading, setLoading] = useState(true)
   const [sendingId, setSendingId] = useState(null)
-  
-  // Since we use the Edge function, we don't need Supabase directly for the send, 
-  // but we invoke the function via supabase client
+  const [search, setSearch] = useState('')
   
   useEffect(() => {
     loadDefaulters()
@@ -22,21 +20,13 @@ export default function FeeRemindersPage() {
   const loadDefaulters = async () => {
     setLoading(true)
     
-    // Find all students with unpaid/overdue/partial fee payments
-    // In a real scenario with thousands of records, this would be a custom view or RPC in Supabase.
-    // For this ERP, we fetch payments that are not paid.
+    // Get all unpaid/overdue fees with student info
+    const { data: unpaidFees, error: err } = await supabase
+      .from('fees')
+      .select('*, students(name, admission_no, class_id, parent_phone, father_name, classes(class_name, section))')
+      .neq('status', 'paid')
+      .order('id', { ascending: false })
     
-    const { data: payments, error: err } = await supabase
-      .from('fee_payments')
-      .select(`
-        student_id,
-        amount_paid,
-        status,
-        fee_structures(amount, due_date, fee_type),
-        students(users!students_id_fkey(full_name), classes(class_name), parents!parents_student_id_fkey(users!parents_id_fkey(full_name), mobile_number))
-      `)
-      .in('status', ['unpaid', 'overdue', 'partial'])
-      
     if (err) {
       error(err.message)
       setLoading(false)
@@ -46,29 +36,30 @@ export default function FeeRemindersPage() {
     // Group by student
     const studentMap = {}
     
-    ;(payments || []).forEach(p => {
-      if (!p.students) return
+    ;(unpaidFees || []).forEach(f => {
+      if (!f.students) return
+      const sid = f.student_id
       
-      if (!studentMap[p.student_id]) {
-        // Handle array or object for parents relationship safely
-        const parentNode = Array.isArray(p.students.parents) ? p.students.parents[0] : p.students.parents
-        
-        studentMap[p.student_id] = {
-          studentId: p.student_id,
-          studentName: p.students.users?.full_name || 'Unknown',
-          className: p.students.classes?.class_name || 'Unknown',
-          parentName: parentNode?.users?.full_name || 'Unknown',
-          parentMobile: parentNode?.mobile_number || 'N/A',
+      if (!studentMap[sid]) {
+        studentMap[sid] = {
+          studentId: sid,
+          studentName: f.students.name || 'Unknown',
+          admissionNo: f.students.admission_no || 'N/A',
+          className: f.students.classes?.class_name || 'Unknown',
+          section: f.students.classes?.section || '',
+          fatherName: f.students.father_name || 'Unknown',
+          parentPhone: f.students.parent_phone || 'N/A',
           totalDue: 0,
-          overdueCount: 0
+          overdueCount: 0,
+          records: 0
         }
       }
       
-      const due = (p.fee_structures?.amount || 0) - (p.amount_paid || 0)
-      studentMap[p.student_id].totalDue += due
+      studentMap[sid].totalDue += parseFloat(f.amount || 0)
+      studentMap[sid].records++
       
-      if (p.fee_structures?.due_date && new Date(p.fee_structures.due_date) < new Date()) {
-        studentMap[p.student_id].overdueCount++
+      if (f.due_date && new Date(f.due_date) < new Date()) {
+        studentMap[sid].overdueCount++
       }
     })
     
@@ -90,18 +81,22 @@ export default function FeeRemindersPage() {
       success('SMS reminder sent successfully!')
     } catch (err) {
       console.error(err)
-      error(err.message || 'Failed to send reminder. Check Edge Function logs.')
+      // Show a more helpful error message
+      if (err.message?.includes('Edge Function') || err.message?.includes('not found')) {
+        error('SMS service not configured. Set up the Supabase Edge Function "send-fee-reminder" to enable SMS reminders.')
+      } else {
+        error(err.message || 'Failed to send reminder.')
+      }
     } finally {
       setSendingId(null)
     }
   }
 
   const handleSendBulk = async () => {
-    if (!confirm(`Are you sure you want to send reminders to ${defaulters.length} parents?`)) return
-    
     let successCount = 0
     
-    for (const d of defaulters) {
+    for (const d of filtered) {
+      if (d.parentPhone === 'N/A') continue
       try {
         setSendingId(d.studentId)
         await supabase.functions.invoke('send-fee-reminder', {
@@ -114,8 +109,20 @@ export default function FeeRemindersPage() {
     }
     
     setSendingId(null)
-    success(`Sent ${successCount} reminders successfully.`)
+    if (successCount > 0) {
+      success(`Sent ${successCount} reminders successfully.`)
+    } else {
+      error('SMS service not configured. No reminders could be sent.')
+    }
   }
+
+  const filtered = defaulters.filter(d => {
+    const q = search.toLowerCase()
+    if (!q) return true
+    return (d.studentName || '').toLowerCase().includes(q) ||
+      (d.admissionNo || '').toLowerCase().includes(q) ||
+      (d.className || '').toLowerCase().includes(q)
+  })
 
   return (
     <>
@@ -125,22 +132,57 @@ export default function FeeRemindersPage() {
         <div className="page-header">
           <div>
             <h2>Fee Defaulters</h2>
-            <p>Send SMS reminders to parents for overdue and unpaid fees</p>
+            <p>Students with unpaid or overdue fees ({defaulters.length} total)</p>
           </div>
-          {defaulters.length > 0 && (
+          {filtered.length > 0 && (
             <button className="btn btn-warning" onClick={handleSendBulk} disabled={sendingId !== null}>
-              <MessageSquare size={16} /> Send Bulk Reminders
+              <MessageSquare size={16} /> Send Bulk Reminders ({filtered.length})
             </button>
           )}
         </div>
 
+        {/* Summary Stats */}
+        {defaulters.length > 0 && (
+          <div className="stats-grid" style={{ marginBottom: 'var(--space-6)' }}>
+            <div className="stat-card">
+              <div className="stat-icon red"><AlertCircle size={22} /></div>
+              <div className="stat-content">
+                <div className="stat-value">{defaulters.length}</div>
+                <div className="stat-label">Total Defaulters</div>
+              </div>
+            </div>
+            <div className="stat-card">
+              <div className="stat-icon orange"><AlertCircle size={22} /></div>
+              <div className="stat-content">
+                <div className="stat-value">
+                  ₹{defaulters.reduce((s, d) => s + d.totalDue, 0).toLocaleString('en-IN')}
+                </div>
+                <div className="stat-label">Total Outstanding</div>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* Search */}
+        <div className="filters-bar">
+          <div className="search-input-wrapper">
+            <Search />
+            <input
+              className="form-input"
+              placeholder="Search by name or admission number..."
+              value={search}
+              onChange={e => setSearch(e.target.value)}
+            />
+          </div>
+        </div>
+
         {loading ? (
           <div className="loading-spinner"><div className="spinner" /></div>
-        ) : defaulters.length === 0 ? (
+        ) : filtered.length === 0 ? (
           <div className="empty-state">
             <AlertCircle />
-            <h3>No defaulters found</h3>
-            <p>All students have paid their fees up to date!</p>
+            <h3>{search ? 'No matching defaulters found' : 'No defaulters found'}</h3>
+            <p>{search ? 'Try adjusting your search.' : 'All students have paid their fees up to date!'}</p>
           </div>
         ) : (
           <div className="table-container">
@@ -148,39 +190,54 @@ export default function FeeRemindersPage() {
               <thead>
                 <tr>
                   <th>Student Name</th>
+                  <th>Admission No</th>
                   <th>Class</th>
-                  <th>Parent Name</th>
-                  <th>Mobile Number</th>
+                  <th>Father's Name</th>
+                  <th>Phone</th>
                   <th>Total Due (₹)</th>
-                  <th>Overdue Records</th>
+                  <th>Status</th>
                   <th>Action</th>
                 </tr>
               </thead>
               <tbody>
-                {defaulters.map(d => (
+                {filtered.map(d => (
                   <tr key={d.studentId}>
                     <td style={{ fontWeight: 600 }}>{d.studentName}</td>
-                    <td>{d.className}</td>
-                    <td>{d.parentName}</td>
-                    <td>{d.parentMobile}</td>
-                    <td style={{ fontWeight: 700, color: 'var(--danger)' }}>₹{d.totalDue.toLocaleString()}</td>
+                    <td>
+                      {d.admissionNo !== 'N/A' ? (
+                        <span className="badge badge-info">{d.admissionNo}</span>
+                      ) : '-'}
+                    </td>
+                    <td>{d.className} {d.section ? `(${d.section})` : ''}</td>
+                    <td>{d.fatherName}</td>
+                    <td>{d.parentPhone}</td>
+                    <td style={{ fontWeight: 700, color: 'var(--danger-500)' }}>
+                      ₹{d.totalDue.toLocaleString('en-IN')}
+                    </td>
                     <td>
                       {d.overdueCount > 0 ? (
-                        <span className="badge badge-danger">{d.overdueCount} Overdue</span>
+                        <span className="badge badge-danger">
+                          <span className="status-dot overdue" />
+                          {d.overdueCount} Overdue
+                        </span>
                       ) : (
-                        <span className="badge badge-warning">Pending</span>
+                        <span className="badge badge-warning">
+                          <span className="status-dot pending" />
+                          {d.records} Pending
+                        </span>
                       )}
                     </td>
                     <td>
                       <button 
                         className="btn btn-secondary btn-sm" 
                         onClick={() => handleSendReminder(d.studentId)}
-                        disabled={sendingId === d.studentId || d.parentMobile === 'N/A'}
+                        disabled={sendingId === d.studentId || d.parentPhone === 'N/A'}
+                        title={d.parentPhone === 'N/A' ? 'No phone number available' : 'Send SMS reminder'}
                       >
                         {sendingId === d.studentId ? (
                           <span className="spinner" style={{ width: 14, height: 14, borderWidth: 2 }} />
                         ) : (
-                          <><Send size={14} /> Send SMS</>
+                          <><Send size={14} /> SMS</>
                         )}
                       </button>
                     </td>

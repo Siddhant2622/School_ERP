@@ -50,7 +50,7 @@ function App() {
             {/* Admin Only */}
             <Route path="/classes" element={<ProtectedRoute roles={['admin']}><ClassesPage /></ProtectedRoute>} />
             <Route path="/teachers" element={<ProtectedRoute roles={['admin']}><TeachersPage /></ProtectedRoute>} />
-            <Route path="/subjects" element={<ProtectedRoute roles={['admin']}><SubjectsPage /></ProtectedRoute>} />
+            <Route path="/subjects" element={<ProtectedRoute roles={['admin', 'teacher']}><SubjectsPage /></ProtectedRoute>} />
             <Route path="/fee-structures" element={<ProtectedRoute roles={['admin']}><FeeStructuresPage /></ProtectedRoute>} />
             <Route path="/fee-reminders" element={<ProtectedRoute roles={['admin']}><FeeRemindersPage /></ProtectedRoute>} />
             

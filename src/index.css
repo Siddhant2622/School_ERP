@@ -1097,3 +1097,635 @@ img { max-width: 100%; display: block; }
     padding-top: calc(var(--header-height) + var(--space-4));
   }
 }
+
+/* ============================================================
+   CONFIRM DIALOG
+   ============================================================ */
+.confirm-dialog {
+  background: var(--bg-secondary);
+  border: 1px solid var(--border-default);
+  border-radius: var(--radius-xl);
+  padding: var(--space-8);
+  width: 100%;
+  max-width: 400px;
+  text-align: center;
+  animation: slideUp var(--transition-base) ease-out;
+  box-shadow: var(--shadow-xl);
+}
+
+.confirm-dialog-icon {
+  width: 56px;
+  height: 56px;
+  border-radius: var(--radius-full);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin: 0 auto var(--space-4);
+}
+
+.confirm-icon-danger {
+  background: rgba(239, 68, 68, 0.15);
+  color: #f87171;
+}
+
+.confirm-icon-warning {
+  background: rgba(245, 158, 11, 0.15);
+  color: #fbbf24;
+}
+
+.confirm-icon-info {
+  background: rgba(59, 130, 246, 0.15);
+  color: #60a5fa;
+}
+
+.confirm-dialog-title {
+  font-size: 1.15rem;
+  font-weight: 700;
+  color: var(--text-primary);
+  margin-bottom: var(--space-2);
+}
+
+.confirm-dialog-message {
+  font-size: 0.85rem;
+  color: var(--text-secondary);
+  margin-bottom: var(--space-6);
+  line-height: 1.6;
+}
+
+.confirm-dialog-actions {
+  display: flex;
+  gap: var(--space-3);
+  justify-content: center;
+}
+
+.confirm-dialog-actions .btn {
+  min-width: 100px;
+}
+
+/* ============================================================
+   BUTTON WARNING VARIANT
+   ============================================================ */
+.btn-warning {
+  background: linear-gradient(135deg, var(--warning-600), #b45309);
+  color: white;
+  border-color: var(--warning-500);
+}
+.btn-warning:hover:not(:disabled) {
+  background: linear-gradient(135deg, var(--warning-500), var(--warning-600));
+  box-shadow: 0 4px 12px rgba(245, 158, 11, 0.4);
+  transform: translateY(-1px);
+}
+
+/* ============================================================
+   PAGINATION
+   ============================================================ */
+.pagination-container {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: var(--space-4) var(--space-5);
+  border-top: 1px solid var(--border-default);
+  background: rgba(15, 23, 42, 0.3);
+  border-radius: 0 0 var(--radius-xl) var(--radius-xl);
+  flex-wrap: wrap;
+  gap: var(--space-3);
+}
+
+.pagination-info {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  font-size: 0.8rem;
+  color: var(--text-secondary);
+}
+
+.pagination-size-select {
+  width: auto !important;
+  min-width: 100px !important;
+  padding: var(--space-1) var(--space-3) !important;
+  font-size: 0.78rem !important;
+}
+
+.pagination-controls {
+  display: flex;
+  align-items: center;
+  gap: var(--space-1);
+}
+
+.pagination-btn {
+  min-width: 32px;
+  height: 32px;
+  padding: 0 var(--space-2) !important;
+  font-size: 0.8rem !important;
+}
+
+.pagination-active {
+  background: linear-gradient(135deg, var(--primary-600), var(--primary-700)) !important;
+  color: white !important;
+  border-color: var(--primary-500) !important;
+}
+
+.pagination-dots {
+  padding: 0 var(--space-1);
+  color: var(--text-tertiary);
+  font-size: 0.85rem;
+}
+
+/* ============================================================
+   TABS
+   ============================================================ */
+.tabs-container {
+  display: flex;
+  gap: var(--space-1);
+  background: var(--bg-input);
+  border-radius: var(--radius-md);
+  padding: 3px;
+  margin-bottom: var(--space-6);
+}
+
+.tab-btn {
+  flex: 1;
+  padding: var(--space-2) var(--space-4);
+  border-radius: var(--radius-sm);
+  border: none;
+  background: transparent;
+  color: var(--text-secondary);
+  font-size: 0.85rem;
+  font-weight: 600;
+  font-family: inherit;
+  cursor: pointer;
+  transition: all var(--transition-fast);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-2);
+  white-space: nowrap;
+}
+
+.tab-btn:hover {
+  color: var(--text-primary);
+}
+
+.tab-btn.active {
+  background: linear-gradient(135deg, var(--primary-600), var(--primary-700));
+  color: white;
+  box-shadow: var(--shadow-sm);
+}
+
+.tab-btn svg {
+  width: 16px;
+  height: 16px;
+}
+
+/* ============================================================
+   FEE LOOKUP PANEL
+   ============================================================ */
+.fee-lookup-panel {
+  background: var(--bg-card);
+  backdrop-filter: blur(10px);
+  border: 1px solid var(--border-default);
+  border-radius: var(--radius-xl);
+  padding: var(--space-6);
+  margin-bottom: var(--space-6);
+}
+
+.fee-lookup-search {
+  position: relative;
+  max-width: 500px;
+  margin: 0 auto;
+}
+
+.fee-lookup-search .form-input {
+  padding: var(--space-3) var(--space-5);
+  padding-left: 44px;
+  font-size: 1rem;
+  border-radius: var(--radius-lg);
+  background: var(--bg-input);
+  transition: all var(--transition-base);
+}
+
+.fee-lookup-search .form-input:focus {
+  box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.2), 0 0 20px rgba(99, 102, 241, 0.1);
+}
+
+.fee-lookup-search svg {
+  position: absolute;
+  left: 14px;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 20px;
+  height: 20px;
+  color: var(--text-tertiary);
+}
+
+.fee-lookup-search .lookup-btn {
+  position: absolute;
+  right: 4px;
+  top: 50%;
+  transform: translateY(-50%);
+}
+
+.student-profile-card {
+  display: flex;
+  align-items: center;
+  gap: var(--space-5);
+  background: linear-gradient(135deg, rgba(99, 102, 241, 0.08), rgba(139, 92, 246, 0.05));
+  border: 1px solid rgba(99, 102, 241, 0.2);
+  border-radius: var(--radius-xl);
+  padding: var(--space-5);
+  margin-bottom: var(--space-5);
+  animation: fadeIn var(--transition-base) ease-out;
+}
+
+.student-avatar-lg {
+  width: 64px;
+  height: 64px;
+  border-radius: var(--radius-xl);
+  background: linear-gradient(135deg, var(--primary-500), var(--primary-700));
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.4rem;
+  font-weight: 800;
+  color: white;
+  flex-shrink: 0;
+}
+
+.student-profile-info {
+  flex: 1;
+  min-width: 0;
+}
+
+.student-profile-name {
+  font-size: 1.15rem;
+  font-weight: 700;
+  color: var(--text-primary);
+  margin-bottom: 2px;
+}
+
+.student-profile-details {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-3);
+  font-size: 0.8rem;
+  color: var(--text-secondary);
+}
+
+.student-profile-details span {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.student-profile-actions {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+}
+
+/* ============================================================
+   PROGRESS BAR
+   ============================================================ */
+.progress-bar-container {
+  width: 100%;
+  height: 8px;
+  background: rgba(148, 163, 184, 0.15);
+  border-radius: var(--radius-full);
+  overflow: hidden;
+}
+
+.progress-bar-fill {
+  height: 100%;
+  border-radius: var(--radius-full);
+  transition: width 0.8s cubic-bezier(0.4, 0, 0.2, 1);
+  background: linear-gradient(90deg, var(--primary-500), var(--primary-400));
+}
+
+.progress-bar-fill.green {
+  background: linear-gradient(90deg, #16a34a, #4ade80);
+}
+
+.progress-bar-fill.orange {
+  background: linear-gradient(90deg, #d97706, #fbbf24);
+}
+
+.progress-bar-fill.red {
+  background: linear-gradient(90deg, #dc2626, #f87171);
+}
+
+/* ============================================================
+   CHART CONTAINER
+   ============================================================ */
+.chart-card {
+  background: var(--bg-card);
+  backdrop-filter: blur(10px);
+  border: 1px solid var(--border-default);
+  border-radius: var(--radius-xl);
+  padding: var(--space-5);
+}
+
+.chart-card-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: var(--space-4);
+}
+
+.chart-card-title {
+  font-size: 0.95rem;
+  font-weight: 700;
+  color: var(--text-primary);
+}
+
+.charts-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: var(--space-4);
+  margin-bottom: var(--space-6);
+}
+
+@media (max-width: 768px) {
+  .charts-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+/* ============================================================
+   FORM VALIDATION
+   ============================================================ */
+.form-input.invalid,
+.form-select.invalid {
+  border-color: var(--danger-500);
+  box-shadow: 0 0 0 3px rgba(239, 68, 68, 0.15);
+  animation: shake 0.3s ease-out;
+}
+
+.form-hint {
+  font-size: 0.72rem;
+  color: var(--text-tertiary);
+  margin-top: var(--space-1);
+}
+
+.form-error-text {
+  font-size: 0.72rem;
+  color: var(--danger-500);
+  margin-top: var(--space-1);
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.required-asterisk {
+  color: var(--danger-500);
+  margin-left: 2px;
+}
+
+@keyframes shake {
+  0%, 100% { transform: translateX(0); }
+  20% { transform: translateX(-4px); }
+  40% { transform: translateX(4px); }
+  60% { transform: translateX(-3px); }
+  80% { transform: translateX(3px); }
+}
+
+/* ============================================================
+   STATUS INDICATOR (animated dot)
+   ============================================================ */
+.status-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  display: inline-block;
+  margin-right: 6px;
+}
+
+.status-dot.paid { background: #4ade80; }
+.status-dot.pending { background: #fbbf24; }
+.status-dot.overdue {
+  background: #f87171;
+  animation: pulse-dot 1.5s ease-in-out infinite;
+}
+
+@keyframes pulse-dot {
+  0%, 100% { opacity: 1; box-shadow: 0 0 0 0 rgba(248, 113, 113, 0.4); }
+  50% { opacity: 0.7; box-shadow: 0 0 0 6px rgba(248, 113, 113, 0); }
+}
+
+/* ============================================================
+   MOBILE MENU
+   ============================================================ */
+.mobile-menu-btn {
+  display: none;
+  width: 36px;
+  height: 36px;
+  padding: 0;
+  border: none;
+  background: transparent;
+  color: var(--text-secondary);
+  cursor: pointer;
+  border-radius: var(--radius-md);
+  transition: all var(--transition-fast);
+  align-items: center;
+  justify-content: center;
+}
+
+.mobile-menu-btn:hover {
+  background: rgba(148, 163, 184, 0.1);
+  color: var(--text-primary);
+}
+
+.sidebar-overlay {
+  display: none;
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.5);
+  backdrop-filter: blur(4px);
+  z-index: 45;
+  animation: fadeIn var(--transition-fast) ease-out;
+}
+
+@media (max-width: 768px) {
+  .mobile-menu-btn {
+    display: flex;
+  }
+  .sidebar-overlay.open {
+    display: block;
+  }
+  .sidebar.open {
+    transform: translateX(0);
+    z-index: 50;
+  }
+}
+
+/* ============================================================
+   RECEIPT PRINT STYLES
+   ============================================================ */
+.receipt-container {
+  background: white;
+  color: #1a1a1a;
+  padding: 32px;
+  max-width: 600px;
+  margin: 0 auto;
+  font-family: 'Inter', sans-serif;
+}
+
+.receipt-header {
+  text-align: center;
+  border-bottom: 2px solid #333;
+  padding-bottom: 16px;
+  margin-bottom: 16px;
+}
+
+.receipt-header h2 {
+  font-size: 1.3rem;
+  margin-bottom: 4px;
+  color: #1a1a1a;
+}
+
+.receipt-header p {
+  font-size: 0.85rem;
+  color: #666;
+}
+
+.receipt-details {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 8px;
+  margin-bottom: 20px;
+  font-size: 0.85rem;
+}
+
+.receipt-details dt {
+  color: #666;
+  font-weight: 500;
+}
+
+.receipt-details dd {
+  font-weight: 600;
+  color: #1a1a1a;
+}
+
+.receipt-total {
+  border-top: 2px solid #333;
+  padding-top: 12px;
+  display: flex;
+  justify-content: space-between;
+  font-size: 1.1rem;
+  font-weight: 700;
+}
+
+.receipt-footer {
+  margin-top: 32px;
+  text-align: center;
+  font-size: 0.75rem;
+  color: #999;
+}
+
+@media print {
+  body * { visibility: hidden; }
+  .receipt-print-area, .receipt-print-area *,
+  .report-card-container, .report-card-container * { visibility: visible; }
+  .receipt-print-area, .report-card-container {
+    position: absolute;
+    left: 0;
+    top: 0;
+    width: 100%;
+    margin: 0;
+    padding: 0;
+  }
+  .report-card-container {
+    padding: 20px;
+  }
+}
+
+/* ============================================================
+   QUICK LINKS / ACTION CARDS
+   ============================================================ */
+.quick-links-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+  gap: var(--space-3);
+  margin-bottom: var(--space-6);
+}
+
+.quick-link-card {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--space-3);
+  padding: var(--space-5);
+  background: var(--bg-card);
+  border: 1px solid var(--border-default);
+  border-radius: var(--radius-xl);
+  cursor: pointer;
+  transition: all var(--transition-base);
+  text-decoration: none;
+  color: var(--text-primary);
+}
+
+.quick-link-card:hover {
+  border-color: var(--primary-500);
+  transform: translateY(-3px);
+  box-shadow: var(--shadow-glow);
+}
+
+.quick-link-icon {
+  width: 44px;
+  height: 44px;
+  border-radius: var(--radius-lg);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.quick-link-label {
+  font-size: 0.8rem;
+  font-weight: 600;
+  text-align: center;
+}
+
+/* ============================================================
+   OVERDUE BADGE
+   ============================================================ */
+.overdue-days {
+  font-size: 0.7rem;
+  color: #f87171;
+  font-weight: 600;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  margin-top: 2px;
+}
+
+/* ============================================================
+   FEE SUMMARY CARD (for student view)
+   ============================================================ */
+.fee-summary-widget {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: var(--space-4);
+  margin-bottom: var(--space-6);
+}
+
+.fee-summary-item {
+  background: var(--bg-card);
+  border: 1px solid var(--border-default);
+  border-radius: var(--radius-xl);
+  padding: var(--space-5);
+  text-align: center;
+}
+
+.fee-summary-amount {
+  font-size: 1.5rem;
+  font-weight: 800;
+  margin-bottom: 4px;
+}
+
+.fee-summary-label {
+  font-size: 0.8rem;
+  color: var(--text-secondary);
+}
+
+.fee-summary-amount.green { color: #4ade80; }
+.fee-summary-amount.orange { color: #fbbf24; }
+.fee-summary-amount.red { color: #f87171; }
